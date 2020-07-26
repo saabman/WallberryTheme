@@ -1,5 +1,6 @@
 const NodeHelper = require('node_helper');
 var request = require('request');
+const fetch = require('node-fetch');
 var moment = require('moment');
 
 module.exports = NodeHelper.create({
@@ -12,15 +13,11 @@ module.exports = NodeHelper.create({
       return
     }
 
-    let wurl = "https://api.darksky.net/forecast/" +
-      this.config.darkSkyApiKey + "/" +
-      this.config.latitude + "," +
-      this.config.longitude +
-      "?units=" + this.config.units +
-      "&lang=" + this.config.language;
+    let wurl = 'http://www.bom.gov.au/fwo/IDN60801/IDN60801.95716.json';
 
-    request({
+request({
 			url: wurl,
+			headers: {'user-agent': 'node.js'},
 			method: 'GET'
 		}, (error, response, body) => {
       if (error) {
