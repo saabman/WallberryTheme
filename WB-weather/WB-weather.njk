@@ -4,6 +4,7 @@
 		<div class="current__temperature light">{{ weather.currentTemp }}<i class="wi wi-degrees"></i><i class="wi wi-forecast-io-{{ weather.currentIcon }} wi-current"></i>
 		</div>
 		<div class="weather__description">{{ weather.currentDescription }}</div>
+		<div class="weather__description">{{ weather.feelsLike}}</div>
 	</div>
   <div class="weather__weeklyforecast">
   {% for day in weather.forecast %}
