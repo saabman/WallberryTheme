@@ -1,41 +1,29 @@
 const NodeHelper = require('node_helper');
-var request = require('request');
-const fetch = require('node-fetch');
-var moment = require('moment');
+const {BrowserWindow} = require('electron')
 
 module.exports = NodeHelper.create({
-  start: function() {
-    this.config = null;
-	},
-
-	fetchData: function() {
-    if (this.config === null) {
-      return
-    }
-
-    let wurl = 'http://www.bom.gov.au/fwo/IDN60801/IDN60801.95716.json';
-
-request({
-			url: wurl,
-			headers: {'user-agent': 'node.js'},
-			method: 'GET'
-		}, (error, response, body) => {
-      if (error) {
-        this.sendSocketNotification("NETWORK_ERROR", error);
-      } else {
-        this.sendSocketNotification("DATA_AVAILABLE", response);
-      }
-		});
-	},
 
 	socketNotificationReceived: function(notification, payload) {
     switch(notification) {
-      case "SET_CONFIG":
-      this.config = payload;
-      break;
+      case "CLEAR_CACHE":
+        try {
+          const win = BrowserWindow.getAllWindows()[0];
+          const ses = win.webContents.session;
 
-      case "FETCH_DATA":
-      this.fetchData();
+          ses.clearCache(() => {
+            console.log("Electron's cache successfully cleared.");
+            this.sendSocketNotification("ELECTRON_CACHE_CLEARED", {});
+          });
+        } catch (e) {
+          // We'll get a TypeError if MM is being run in server only mode because Electron won't be running the app - if that's the case we can just say the cache has been cleared and call it a day
+          if (e.name == "TypeError") {
+            this.sendSocketNotification("ELECTRON_CACHE_CLEARED", {});
+          } else {
+            console.log("WallberryTheme ERROR: ", e);
+          }
+
+        }
+
       break;
     }
 	}
