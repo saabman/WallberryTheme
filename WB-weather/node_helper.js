@@ -13,7 +13,7 @@ module.exports = NodeHelper.create({
       return
     }
 
-    let wurl = 'http://www.bom.gov.au/fwo/IDN60801/IDN60801.95716.json';
+    let wurl = 'http://www.bom.gov.au/fwo/IDN60801/'+ this.config.stationId +'.json';
 
 request({
 			url: wurl,
