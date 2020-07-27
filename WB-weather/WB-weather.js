@@ -172,7 +172,8 @@ Module.register("WB-weather", {
 // gets the BOM air temp, cloud cover discription and the apparent temp.
 
     weather.currentTemp = (bom.observations.data[0].air_temp);
-		weather.currentDescription = bom.observations.data[0].cloud;
+		//weather.currentDescription = bom.observations.data[0].cloud;
+		currentDescription = bom.observations.data[0].cloud;
 		weather.feelsLike = ("Feels Like "+ bom.observations.data[0].apparent_t);
 
 // The best BOM gives us for info for a weather icon is the cloud field which
@@ -192,14 +193,20 @@ Module.register("WB-weather", {
 			console.log(timeOfDay);
 
 
-		weather.weatherType = this.convertWeatherType(weather.currentDescription)+'-'+(timeOfDay);
+
+		currentIcont = this.convertWeatherType(currentDescription);
+		console.log (currentIcont);
+		if (currentIcont == 'cloudy'){
+			weather.currentIcon = (currentIcont)
+		}
+		else {
+		weather.currentIcon = (currentIcont) + '-'+ (timeOfDay)
+		}
+
+		console.log('weather Icon ' + weather.currentIcon);
 
 
-		weather.currentIcon = weather.weatherType;
-		console.log(weather.currentIcon);
 
-		//console.log(this.car.model);
-		//console.log(weatherI.clear);
 
 //    for (var i=0; i<this.config.daysToForecast; i++) {
 //      var day = {};
