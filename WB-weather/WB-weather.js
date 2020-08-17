@@ -8,7 +8,7 @@
 Module.register("WB-weather", {
 	// Module config defaults.
 	defaults: {
-		daysToForecast: 4, // how many days to include in upcoming forecast
+		daysToForecast: 5, // how many days to include in upcoming forecast
 
     updateInterval: 10 * 60 * 1000, // 10 minutes
     initialLoadDelay: 1000,
@@ -25,12 +25,34 @@ Module.register("WB-weather", {
 
 	precipIcons: { // icons for displaying type of precipitation
 		"default": "wi-raindrop",
-		"rain": "wi-raindrop",
+		"12": "wi-raindrop",
 		"snow": "wi-snowflake-cold"
 	},
 
 	// Map icons from BOM - This list may need adjusting depending on what BOM
 	// gives us over time.
+	convertForecastType(forecastType) {
+		const forecastTypes = {
+					"1":"day-sunny",
+					"2": "night-clear",
+					"3": "day-sunny-overcast",
+					"4": "day-cloudy",
+					"6": "day-haze",
+					"8":"rain-mix",
+					"9":"windy",
+					"10":"day-fog",
+					"11":"day-showers",
+					"12":"day-rain",
+					"13":"dust",
+					"14":"snowflake-cold",
+					"15":"snow",
+					"16":"thunderstorm",
+					"17":"day-showers",
+					"18":"day-rain",
+					"19":"hurricane"
+				};
+		return forecastTypes.hasOwnProperty(forecastType) ? forecastTypes[forecastType] : null;
+	},
 	convertWeatherType(weatherType) {
 		const weatherTypes = {
 					"-": "clear",
@@ -99,28 +121,35 @@ Module.register("WB-weather", {
 		this.fetchTimer = setTimeout(() => {this.sendSocketNotification("FETCH_DATA")}, nextFetch);
 	},
 
-	socketNotificationReceived: function(notification, payload) {
+	socketNotificationReceived: function(notification, currentWeather) {
 
 		switch(notification) {
 			case "NETWORK_ERROR":
 				// this is likely due to connection issue - we should retry in a bit
-				Log.error("Error reaching BOM: ", payload);
-				this.wdata.fetchError = payload;
+				Log.error("Error reaching BOM Current Weather: ", currentWeather);
+				this.wdata.fetchError = currentWeather;
 				this.scheduleUpdate();
 				break;
 
 			case "DATA_AVAILABLE":
-				console.log(payload.statusCode);
+				console.log(currentWeather.statusCode);
 				// code 200 means all went well - we have weather data
-				if (payload.statusCode == 200) {
+				if (currentWeather.statusCode == 200) {
 					this.scheduleUpdate();
-					console.log("code 200",payload);
+					console.log("code 200",currentWeather);
 				} else {
 					// if we get anything other than a 200 from BOM it's probably a config error or something else the user will have to restart MagicMirror to address - we shouldn't schedule anymore updates
-					Log.error("BOM Error: ", payload);
+					Log.error("BOM Error: ", currentWeather);
 				}
-				this.wdata.fetchResponse = payload;
+				this.wdata.fetchResponse = currentWeather;
 				break;
+
+				case "forecastAvailable":
+					//console.log("forcast available",currentWeather);
+					this.wdata.fetchForecast = currentWeather;
+	//				console.log(this.wdata.fetchForecast);
+					break;
+
 		}
 
 		this.updateDom();
@@ -144,7 +173,7 @@ Module.register("WB-weather", {
 
 		// DarkSky sent us an error of some kind, probably user supplied an incorrect config parameter
 		if (this.wdata.fetchResponse.status != 200) {
-			console.log(this.wdata.fetchResponse.body);
+			//console.log(this.wdata.fetchResponse.body);
 			let errorObj = JSON.parse(this.wdata.fetchResponse.body);
 			status.error = this.translate(this.translationKey.error) + errorObj.error;
 			return status;
@@ -165,7 +194,8 @@ Module.register("WB-weather", {
 		}
 
 		let bom = JSON.parse(this.wdata.fetchResponse.body);
-
+		let bomForecast = JSON.parse(this.wdata.fetchForecast);
+		console.log(bomForecast);
 		var weather = {};
     weather.forecast = [];
 
@@ -174,6 +204,7 @@ Module.register("WB-weather", {
     weather.currentTemp = (bom.observations.data[0].air_temp);
 		//weather.currentDescription = bom.observations.data[0].cloud;
 		currentDescription = bom.observations.data[0].cloud;
+		console.log(currentDescription);
 		weather.feelsLike = ("Feels Like "+ bom.observations.data[0].apparent_t);
 
 // The best BOM gives us for info for a weather icon is the cloud field which
@@ -206,27 +237,33 @@ Module.register("WB-weather", {
 		console.log('weather Icon ' + weather.currentIcon);
 
 
+// THis section takes the Forecast Information and picks out the bits to display
+		for (var i=1; i<this.config.daysToForecast; i++) {  //the number of days the forcast runs for
+			var day = {};
 
+			let forecast = bomForecast.product.forecast[0].area[1]["forecast-period"][i];
 
-//    for (var i=0; i<this.config.daysToForecast; i++) {
-//      var day = {};
-//      let forecast = darksky.daily.data[i];
-//      day.highTemp = Math.round(forecast.temperatureHigh);
-//      day.lowTemp = Math.round(forecast.temperatureLow);
-//      day.precipProbability = Math.round(forecast.precipProbability * 100); // x100 to convert from decimal to percentage
-//      day.precipType = forecast.hasOwnProperty("precipType") ? this.precipIcons[forecast.precipType] : this.precipIcons["default"];
-//      day.icon = forecast.icon;
+		day.highTemp = Math.round(forecast.element[3]["_"]);
 
-//      var date = new Date(forecast.time*1000); // not sure about the x1000 here
-//      day.dayLabel = moment.weekdaysShort(date.getDay());
+		day.lowTemp = Math.round(forecast.element[2]["_"]);
+		day.precipProbability = (forecast.text[2]["_"]);
+		day.precipType = forecast.hasOwnProperty("precipType") ? this.precipIcons[forecast.precipType] : this.precipIcons["default"];
+		day.icon = this.convertForecastType(forecast.element[0]["_"]);
 
-      // changing the day label to "today" instead of day of the week
-//      if (i === 0) {
-//        day.dayLabel = this.translate(this.translationKey.today);
-//      }
-//			weather.forecast.push(day);
-//    }
+		//day.icon = forecast.element[0]["_"];
+			console.log("icon "+ day.icon)
+			//var date = forecast["start-time-local"][0];
+			var date = new Date(forecast["start-time-local"][0]); // not sure about the x1000 here
+			console.log(date);
+			day.dayLabel = moment.weekdaysShort(date.getDay());
 
+			// changing the day label to "today" instead of day of the week
+			if (i === 0) {
+				day.dayLabel = this.translate(this.translationKey.today);
+						}
+			weather.forecast.push(day);
+		}
+		console.log(weather);
 		return weather;
 	}
 	});
