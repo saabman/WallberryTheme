@@ -238,11 +238,16 @@ Module.register("WB-weather", {
 
 
 // THis section takes the Forecast Information and picks out the bits to display
-		for (var i=1; i<this.config.daysToForecast; i++) {  //the number of days the forcast runs for
+		for (var i=0; i<this.config.daysToForecast; i++) {  //the number of days the forcast runs for
 			var day = {};
 
 			let forecast = bomForecast.product.forecast[0].area[1]["forecast-period"][i];
-
+			// The current day forecast doesn display minimum temperature so we check for current day (0)
+			// and modify result fied locations.
+			if (i==0) {
+				day.highTemp = Math.round(forecast.element[1]["_"]);
+			}
+			else {
 			// As we are using a self generated JSON file from an XML the postion of the max and min temperature values varies
 			// if the is a rain fall figgure for the day. As Max temp is the last field check to see if it is invaild if it is move
 			// make an adjustment for the shift in the data.
@@ -256,7 +261,7 @@ Module.register("WB-weather", {
 
 		day.lowTemp = Math.round(forecast.element[2]["_"]);
 		}
-
+	}
 		day.precipProbability = (forecast.text[2]["_"]);
 		day.precipType = forecast.hasOwnProperty("precipType") ? this.precipIcons[forecast.precipType] : this.precipIcons["default"];
 		day.icon = this.convertForecastType(forecast.element[0]["_"]);
