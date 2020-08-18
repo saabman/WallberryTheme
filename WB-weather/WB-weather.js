@@ -243,9 +243,20 @@ Module.register("WB-weather", {
 
 			let forecast = bomForecast.product.forecast[0].area[1]["forecast-period"][i];
 
+			// As we are using a self generated JSON file from an XML the postion of the max and min temperature values varies
+			// if the is a rain fall figgure for the day. As Max temp is the last field check to see if it is invaild if it is move
+			// make an adjustment for the shift in the data.
+			if (forecast.element[3] == undefined) {
+				day.highTemp = Math.round(forecast.element[2]["_"]);
+
+				day.lowTemp = Math.round(forecast.element[1]["_"]);
+			}
+			else {
 		day.highTemp = Math.round(forecast.element[3]["_"]);
 
 		day.lowTemp = Math.round(forecast.element[2]["_"]);
+		}
+
 		day.precipProbability = (forecast.text[2]["_"]);
 		day.precipType = forecast.hasOwnProperty("precipType") ? this.precipIcons[forecast.precipType] : this.precipIcons["default"];
 		day.icon = this.convertForecastType(forecast.element[0]["_"]);
