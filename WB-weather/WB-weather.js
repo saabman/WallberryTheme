@@ -245,7 +245,12 @@ Module.register("WB-weather", {
 			// The current day forecast doesn display minimum temperature so we check for current day (0)
 			// and modify result fied locations.
 			if (i==0) {
-				day.highTemp = Math.round(forecast.element[1]["_"]);
+							if (typeof (forecast.element[1])=="undefined") {
+								day.highTemp == "null";
+							}
+							else {
+							day.highTemp = Math.round(forecast.element[1]["_"]);
+						}
 			}
 			else {
 			// As we are using a self generated JSON file from an XML the postion of the max and min temperature values varies
