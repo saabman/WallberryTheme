@@ -1,3 +1,4 @@
+# This fork is a working hack to get BOM AU weather data running while I polish the guts of the weather module to make it more user friendly 
 
 # WallberryTheme: A MagicMirror² Module
 The `WallberryTheme` module re-themes [MagicMirror²](https://github.com/MichMich/MagicMirror) to look like a beautiful photo-box wall display. It adds a new font, styles, and periodically changing background image pulled from Unsplash.com.
